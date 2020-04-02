@@ -1,1 +1,1 @@
-# Cafebazaar-IAB-for-Unity
+# Cafebazaar IAB for Unity
