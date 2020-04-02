@@ -125,9 +125,6 @@ public class InAppStore : MonoBehaviour
             case StoreHandler.ERROR_PURCHASE_IS_REFUNDED:
                 // Purchase is refunded
                 break;
-            case StoreHandler.ERROR_DIFFERENT_PAYLOAD:
-                // Different payload 
-                break;
             case StoreHandler.ERROR_NOT_SUPPORTED_IN_EDITOR:
                 // You can't use In App Billing in Editor mode. It only works on Android devices.
                 break;
@@ -193,62 +190,4 @@ public class InAppStore : MonoBehaviour
             text.text = nextValue + "";
         }
     }
-
-
-
-
-    /*
-    public void purchasedFailed(int errorCode, string info)
-    {
-        // purchase failed. show user the proper message
-        switch (errorCode)
-        {
-            case 1: // error connecting cafeBazaar
-            case 2: // error connecting cafeBazaar
-            case 4: // error connecting cafeBazaar
-            case 5: // error connecting cafeBazaar
-            case 3:  // error connecting cafeBazaar - inventory
-            case 10: // error connecting cafeBazaar - inventory
-
-                break;
-            case 6: // user canceled the purchase
-
-                break;
-            case 7: // purchase failed
-
-                break;
-            case 8: // failed to consume product. but the purchase was successful.
-
-                break;
-            case 9: // user didn't login to cafeBazaar - inventory
-
-                break;
-            case 11: // user has not this product - inventory
-
-                break;
-            case 12: // error setup cafebazaar billing
-            case 13: // error setup cafebazaar billing
-            case 14: // error setup cafebazaar billing
-
-                break;
-            case 15: // you should enter your public key
-
-                break;
-            case 16: // unkown error happened
-
-                break;
-            case 17: // the result from cafeBazaar is not valid.
-
-                break;
-        }
-
-        Debug.Log("errorCode: " + errorCode + ", " + info);
-
-        //txtErrorDialog.text = "operation failed." + "\n" + info;
-        loadingDialog.SetActive(false);
-
-        errorDialog.SetActive(true);
-    }
-    
-    */
 }

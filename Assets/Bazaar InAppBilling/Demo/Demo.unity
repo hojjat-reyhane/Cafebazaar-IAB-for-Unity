@@ -1602,12 +1602,12 @@ Prefab:
     - target: {fileID: 114253565147117086, guid: 70c636dee37d2ac40b082aed5f11d6be,
         type: 2}
       propertyPath: publicKey
-      value: ' MIHNMA0GCSqGSIb3DQEBAQUAA4G7ADCBtwKBrwDXg+esGAkZOppt+HkaOkh3dpGudD8+OiFw4SAUFySj1QwAYIMRbYmyqpWp4TJKiVwANw1njWt4od3PmRkDeLDnk4FEy3a41WQFXeCMGlieuPCPnv99pe6tDmps8YmMw32+D66HrI+PTaTiZ9Fnw+3WqnwBdFjD43frrNbN/6E1ohL6A98BwQylR9dUPX8+zq4lRGWipQIalax18W5A4uR4xMbNkenzOaL+tCaqZ58CAwEAAQ=='
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 114253565147117086, guid: 70c636dee37d2ac40b082aed5f11d6be,
         type: 2}
       propertyPath: payload
-      value: test
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 114253565147117086, guid: 70c636dee37d2ac40b082aed5f11d6be,
         type: 2}
@@ -1627,17 +1627,27 @@ Prefab:
     - target: {fileID: 114253565147117086, guid: 70c636dee37d2ac40b082aed5f11d6be,
         type: 2}
       propertyPath: clientId
-      value: rpAClgMubqzIvyp0KkHbOGVo3jT093kOnSzI1jmM
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 114253565147117086, guid: 70c636dee37d2ac40b082aed5f11d6be,
         type: 2}
       propertyPath: clientSecret
-      value: bfMxRV1EzfxIzeJjcQtsj4AoEfXFKgGreZpZ6SUtJGsfouV09IYxhcFtVWnU
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 114253565147117086, guid: 70c636dee37d2ac40b082aed5f11d6be,
         type: 2}
       propertyPath: refreshToken
-      value: Ocno2V2CaZFPkITORE0pY2LOQdOOWX
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 114253565147117086, guid: 70c636dee37d2ac40b082aed5f11d6be,
+        type: 2}
+      propertyPath: products.Array.data[0].type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114253565147117086, guid: 70c636dee37d2ac40b082aed5f11d6be,
+        type: 2}
+      propertyPath: validatePurchases
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 70c636dee37d2ac40b082aed5f11d6be, type: 2}

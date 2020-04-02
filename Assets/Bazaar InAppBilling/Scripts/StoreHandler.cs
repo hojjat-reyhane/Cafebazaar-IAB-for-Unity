@@ -44,8 +44,7 @@ public class StoreHandler : MonoBehaviour {
     public const int ERROR_HAS_NOT_PRODUCT_IN_INVENTORY = 8;
     public const int ERROR_CONNECTING_VALIDATE_API = 9;
     public const int ERROR_PURCHASE_IS_REFUNDED = 10;
-    public const int ERROR_DIFFERENT_PAYLOAD = 11;
-    public const int ERROR_NOT_SUPPORTED_IN_EDITOR = 12;
+    public const int ERROR_NOT_SUPPORTED_IN_EDITOR = 11;
     
     private void Awake()
     {
@@ -244,45 +243,34 @@ public class StoreHandler : MonoBehaviour {
             Debug.Log("resultJSON: " + resultJSON);
             JSONNode json = JSON.Parse(resultJSON);
 
-            if (json["developerPayload"].Value.ToString() == currentPurchase.payload)
-            {
-                ValidateResult result = new ValidateResult();
-                result.isConsumed = json["consumptionState"].AsInt == 0;
-                result.isRefund = json["purchaseState"].AsInt == 1;
-                result.kind = json["kind"].Value.ToString();
-                result.payload = json["developerPayload"].Value.ToString();
-                result.time = json["purchaseTime"].Value.ToString();
+            ValidateResult result = new ValidateResult();
+            result.isConsumed = json["consumptionState"].AsInt == 0;
+            result.isRefund = json["purchaseState"].AsInt == 1;
+            result.kind = json["kind"].Value.ToString();
+            result.payload = json["developerPayload"].Value.ToString();
+            result.time = json["purchaseTime"].Value.ToString();
 
-                if (result.isRefund)
+            if (result.isRefund)
+            {
+                if (mErrorEvent != null)
                 {
-                    if (mErrorEvent != null)
-                    {
-                        mErrorEvent.Invoke(CategorizeErrorCode(43), "purchase is refunded.");
-                        mErrorEvent = null;
-                    }
-                }
-                else
-                {
-                    if (products[selectedProductIndex].type == Product.ProductType.Consumable && !result.isConsumed)
-                    {
-                        ConsumePurchase(currentPurchase);
-                    }
-                    else
-                    {
-                        if (mSuccesEvent != null)
-                        {
-                            mSuccesEvent.Invoke(currentPurchase, selectedProductIndex);
-                            mSuccesEvent = null;
-                        }
-                    }
+                    mErrorEvent.Invoke(CategorizeErrorCode(43), "purchase is refunded.");
+                    mErrorEvent = null;
                 }
             }
             else
             {
-                if (mErrorEvent != null)
+                if (products[selectedProductIndex].type == Product.ProductType.Consumable && !result.isConsumed)
                 {
-                    mErrorEvent.Invoke(CategorizeErrorCode(44), "error validating purchase. payload is not valid.");
-                    mErrorEvent = null;
+                    ConsumePurchase(currentPurchase);
+                }
+                else
+                {
+                    if (mSuccesEvent != null)
+                    {
+                        mSuccesEvent.Invoke(currentPurchase, selectedProductIndex);
+                        mSuccesEvent = null;
+                    }
                 }
             }
         }
@@ -290,7 +278,7 @@ public class StoreHandler : MonoBehaviour {
         {
             if (mErrorEvent != null)
             {
-                mErrorEvent.Invoke(CategorizeErrorCode(45), "error validating purchase. " + www.error);
+                mErrorEvent.Invoke(CategorizeErrorCode(44), "error validating purchase. " + www.error);
                 mErrorEvent = null;
             }
         }
@@ -487,12 +475,10 @@ public class StoreHandler : MonoBehaviour {
             case 40:
             case 41:
             case 42:
-            case 45:
+            case 44:
                 return ERROR_CONNECTING_VALIDATE_API;
             case 43:
                 return ERROR_PURCHASE_IS_REFUNDED;
-            case 44:
-                return ERROR_DIFFERENT_PAYLOAD;
             default:
                 return ERROR_INTERNAL;
         }

@@ -63,9 +63,9 @@ public class StoreHandlerEditor : Editor {
 
         GUIStyle style = new GUIStyle(EditorStyles.label);
         style.normal.textColor = Color.black;
-        style.fontSize = 26;
-        style.alignment = TextAnchor.MiddleCenter;
-        GUILayout.Label("CafeBazaar IAB", style);
+        style.fontSize = 20;
+        style.alignment = TextAnchor.MiddleLeft;
+        GUILayout.Label("Cafebazaar IAB Plugin", style);
 
         EditorGUILayout.Space();
         style.normal.textColor = Color.gray;
