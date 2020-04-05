@@ -30,10 +30,10 @@ public class StoreHandler : MonoBehaviour {
     private Purchase currentPurchase;
     private Action<int, string> mErrorEvent;
     private Action<Purchase, int> mSuccesEvent;
-    
+
     private static readonly string utilsClass = "ir.cafebazaar.iab.ServiceBillingBazaar";
     private static readonly string editorModeError = "You can't use In App Billing in Editor mode. It only works on Android devices.";
-    
+
     public const int ERROR_WRONG_SETTINGS = 1;
     public const int ERROR_BAZAAR_NOT_INSTALLED = 2;
     public const int ERROR_SERVICE_NOT_INITIALIZED = 3;
@@ -45,7 +45,8 @@ public class StoreHandler : MonoBehaviour {
     public const int ERROR_CONNECTING_VALIDATE_API = 9;
     public const int ERROR_PURCHASE_IS_REFUNDED = 10;
     public const int ERROR_NOT_SUPPORTED_IN_EDITOR = 11;
-    
+    public const int SERVICE_IS_NOW_READY_RETRY_OPERATION = 12;
+
     private void Awake()
     {
         if (instance != null)
@@ -67,10 +68,12 @@ public class StoreHandler : MonoBehaviour {
         InitializeBillingService();
     }
 
-    public void InitializeBillingService()
+    public void InitializeBillingService(Action<int, string> errorEvent)
     {
         if (IsBillingServiceInitialized) return;
-        
+
+        mErrorEvent = errorEvent;
+
         if (Application.platform == RuntimePlatform.Android)
         {
             using (AndroidJavaClass pluginClass = new AndroidJavaClass(utilsClass))
@@ -85,6 +88,11 @@ public class StoreHandler : MonoBehaviour {
         }
     }
 
+    public void InitializeBillingService()
+    {
+        InitializeBillingService(null);
+    }
+
     public void Purchase(int productIndex, Action<int, string> errorEvent, Action<Purchase, int> successEvent)
     {
         mErrorEvent = errorEvent;
@@ -95,19 +103,14 @@ public class StoreHandler : MonoBehaviour {
         {
             if (!IsBillingServiceInitialized)
             {
-                InitializeBillingService();
-                if (mErrorEvent != null)
-                {
-                    mErrorEvent.Invoke(CategorizeErrorCode(6), "Billing service is not initialized.");
-                    mErrorEvent = null;
-                }
+                InitializeBillingService(mErrorEvent);
                 return;
             }
 
             if (pluginUtilsClass != null)
             {
-                pluginUtilsClass.Call("Purchase", products[productIndex].productId, 
-                    (products[productIndex].type == Product.ProductType.Consumable) && !validatePurchases, 
+                pluginUtilsClass.Call("Purchase", products[productIndex].productId,
+                    (products[productIndex].type == Product.ProductType.Consumable) && !validatePurchases,
                     payload);
             }
         }
@@ -132,12 +135,7 @@ public class StoreHandler : MonoBehaviour {
         {
             if (!IsBillingServiceInitialized)
             {
-                InitializeBillingService();
-                if (mErrorEvent != null)
-                {
-                    mErrorEvent.Invoke(CategorizeErrorCode(6), "Billing service is not initialized.");
-                    mErrorEvent = null;
-                }
+                InitializeBillingService(mErrorEvent);
                 return;
             }
 
@@ -157,10 +155,8 @@ public class StoreHandler : MonoBehaviour {
         }
     }
 
-    private void ConsumePurchase(Purchase purchase)
+    public void ConsumePurchase(Purchase purchase)
     {
-        Debug.Log("Call ConsumePurchase()");
-
         if (pluginUtilsClass != null)
         {
             pluginUtilsClass.Call("ConsumePurchase", purchase.itemType, purchase.json, purchase.signature);
@@ -169,7 +165,6 @@ public class StoreHandler : MonoBehaviour {
 
     private void ValidatePurchace(Purchase purchase)
     {
-        Debug.Log("ValidatePurchace()");
         if (purchase == null)
         {
             if (mErrorEvent != null)
@@ -204,7 +199,6 @@ public class StoreHandler : MonoBehaviour {
 
     private IEnumerator GetRefreshCodeCoroutine(UnityWebRequest www)
     {
-        Debug.Log("GetRefreshCodeCoroutine()");
         yield return www.SendWebRequest();
 
         if (www.isDone && !www.isNetworkError && !www.isHttpError)
@@ -233,14 +227,12 @@ public class StoreHandler : MonoBehaviour {
 
     private IEnumerator ValidatePurchaseCoroutine(UnityWebRequest www)
     {
-        Debug.Log("ValidatePurchaseCoroutine()");
         yield return www.SendWebRequest();
 
         if (www.isDone && !www.isNetworkError && !www.isHttpError)
         {
             string resultJSON = www.downloadHandler.text;
-
-            Debug.Log("resultJSON: " + resultJSON);
+            
             JSONNode json = JSON.Parse(resultJSON);
 
             ValidateResult result = new ValidateResult();
@@ -326,7 +318,7 @@ public class StoreHandler : MonoBehaviour {
         purchase.json = data;
         return purchase;
     }
-    
+
     private void OnApplicationQuit()
     {
         if (pluginUtilsClass != null)
@@ -334,11 +326,10 @@ public class StoreHandler : MonoBehaviour {
             pluginUtilsClass.Call("StopIabHelper");
         }
     }
-    
+
     #region Android Java Interactions
     public void GetPurchaseResult(string result)
     {
-        Debug.Log("GetPurchaseResult(): " + result);
         AndroidJavaResult iabResult = CheckAndroidJavaResult(result);
         if (iabResult.errorCode == 0)
         {
@@ -374,7 +365,6 @@ public class StoreHandler : MonoBehaviour {
 
     public void GetConsumeResult(string result)
     {
-        Debug.Log("GetConsumeResult(): " + result);
         AndroidJavaResult iabResult = CheckAndroidJavaResult(result);
         if (iabResult.errorCode == 0)
         {
@@ -428,6 +418,11 @@ public class StoreHandler : MonoBehaviour {
         if (iabResult.errorCode == 0)
         {
             isInitialized = true;
+            if (mErrorEvent != null)
+            {
+                mErrorEvent.Invoke(CategorizeErrorCode(6), iabResult.data);
+                mErrorEvent = null;
+            }
         }
         else
         {
@@ -456,8 +451,9 @@ public class StoreHandler : MonoBehaviour {
             case 3:
             case 4:
             case 5:
-            case 6:
                 return ERROR_SERVICE_NOT_INITIALIZED;
+            case 6:
+                return SERVICE_IS_NOW_READY_RETRY_OPERATION;
             case 21:
             case 22:
                 return ERROR_OPERATION_CANCELLED;
@@ -518,6 +514,14 @@ public class Purchase
     public string itemType;
     public string signature;
     public string json;
+
+    public Purchase() { }
+
+    public Purchase(string orderId, string productId)
+    {
+        this.orderId = orderId;
+        this.productId = productId;
+    }
 }
 
 public class ValidateResult
@@ -528,4 +532,3 @@ public class ValidateResult
     public string payload;
     public string time;
 }
-

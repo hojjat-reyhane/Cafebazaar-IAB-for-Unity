@@ -12,6 +12,7 @@ public class InAppStore : MonoBehaviour
     private bool doubleCoin = false;
     private readonly string COIN_KEY = "coin";
     private readonly string DOUBLE_COIN_KEY = "doubleCoin";
+    private int selectedProductIndex;
 
     void Start()
     {
@@ -28,12 +29,14 @@ public class InAppStore : MonoBehaviour
 
     public void BuyProduct(int index)
     {
+        selectedProductIndex = index;
         loadingDialog.SetActive(true);
         StoreHandler.instance.Purchase(index, OnPurchaseFailed, OnPurchasedSuccessfully);
     }
 
     public void CheckInventory(int index)
     {
+        selectedProductIndex = index;
         loadingDialog.SetActive(true);
         StoreHandler.instance.CheckInventory(index, OnInventoryCheckFailed, OnInventoryHadProduct);
     }
@@ -64,11 +67,45 @@ public class InAppStore : MonoBehaviour
 
     private void OnPurchaseFailed(int errorCode, string message)
     {
-        CheckErrorCode(errorCode);
-
-        txtResult.text = "ErrorCode: " + errorCode + ", " + message + "\n" + txtResult.text;
-        errorDialog.SetActive(true);
         loadingDialog.SetActive(false);
+        txtResult.text = "ErrorCode: " + errorCode + ", " + message + "\n" + txtResult.text;
+
+        switch (errorCode)
+        {
+            case StoreHandler.ERROR_WRONG_SETTINGS:
+                // Enter public key (RSA from Bazaar panel) in StoreHandler.cs
+                break;
+            case StoreHandler.ERROR_BAZAAR_NOT_INSTALLED:
+                // User didn't install CafeBazaar application.
+                break;
+            case StoreHandler.ERROR_SERVICE_NOT_INITIALIZED:
+                // Billing service isn't initialized. Encorage user to retry.
+                break;
+            case StoreHandler.ERROR_INTERNAL:
+                // Internal error happened. Follow the instructions carefully and if it persists contact Bazaar developer support.
+                break;
+            case StoreHandler.ERROR_OPERATION_CANCELLED:
+                // Operation cancelled by user or failed.
+                break;
+            case StoreHandler.ERROR_CONSUME_PURCHASE:
+                // Purchase was successful but couldn't consume it. So the purchase is stored in user's inventory and can be restore later without paying.
+                break;
+            case StoreHandler.ERROR_CONNECTING_VALIDATE_API:
+                // Couldn't connect validating API due to internet connection failure or wrong client info in StoreHandler.cs.
+                break;
+            case StoreHandler.ERROR_PURCHASE_IS_REFUNDED:
+                // Purchase is refunded
+                break;
+            case StoreHandler.ERROR_NOT_SUPPORTED_IN_EDITOR:
+                // You can't use In App Billing in Editor mode. It only works on Android devices.
+                break;
+            case StoreHandler.SERVICE_IS_NOW_READY_RETRY_OPERATION:
+                // Billing service initialized, retry the operation to purchase.
+                BuyProduct(selectedProductIndex);
+                return;
+        }
+
+        errorDialog.SetActive(true);
     }
 
     private void OnInventoryHadProduct(Purchase purchase, int productIndex)
@@ -84,14 +121,6 @@ public class InAppStore : MonoBehaviour
     }
 
     private void OnInventoryCheckFailed(int errorCode, string message)
-    {
-        CheckErrorCode(errorCode);
-
-        txtResult.text = "ErrorCode: " + errorCode + ", " + message + "\n" + txtResult.text;
-        loadingDialog.SetActive(false);
-    }
-    
-    private void CheckErrorCode(int errorCode)
     {
         switch (errorCode)
         {
@@ -128,9 +157,16 @@ public class InAppStore : MonoBehaviour
             case StoreHandler.ERROR_NOT_SUPPORTED_IN_EDITOR:
                 // You can't use In App Billing in Editor mode. It only works on Android devices.
                 break;
+            case StoreHandler.SERVICE_IS_NOW_READY_RETRY_OPERATION:
+                // Billing service initialized, retry the operation to purchase.
+                CheckInventory(selectedProductIndex);
+                return;
         }
-    }
 
+        txtResult.text = "ErrorCode: " + errorCode + ", " + message + "\n" + txtResult.text;
+        loadingDialog.SetActive(false);
+    }
+    
     private int GetCoins()
     {
         return PlayerPrefs.GetInt(COIN_KEY, 0);
