@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using BazaarInAppBilling;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,6 +8,7 @@ public class InAppStore : MonoBehaviour
     public GameObject successDialog, errorDialog, loadingDialog;
     public Text txtResult;
     public Text txtCoins;
+    public Text[] priceTexts;
     public Button btnDoubleCoin;
     
     private bool doubleCoin = false;
@@ -16,6 +18,9 @@ public class InAppStore : MonoBehaviour
 
     void Start()
     {
+        txtResult.text = "Initializing Billing Service ...\n" + txtResult.text;
+        StoreHandler.instance.InitializeBillingService(OnServiceInitializationFailed, OnServiceInitializedSuccessfully);
+
         txtCoins.text = GetCoins() + "$";
         doubleCoin = PlayerPrefs.GetInt(DOUBLE_COIN_KEY, 0) == 1;
         btnDoubleCoin.interactable = !doubleCoin;
@@ -46,6 +51,34 @@ public class InAppStore : MonoBehaviour
         StoreHandler.instance.validatePurchases = state;
     }
 
+    private void OnServiceInitializedSuccessfully()
+    {
+        txtResult.text = "Service Initialized.\n" + txtResult.text;
+        txtResult.text = "Loading Product Prices ...\n" + txtResult.text;
+        StoreHandler.instance.LoadProductPrices(OnLoadingPricesFailed, OnPricesLoadedSuccessfully);
+    }
+
+    private void OnServiceInitializationFailed(int errorCode, string message)
+    {
+        txtResult.text = "Initialization Failed. ErrorCode: " + errorCode + ", " + message + "\n" + txtResult.text;
+    }
+    
+    private void OnPricesLoadedSuccessfully()
+    {
+        txtResult.text = "Products Prices Loaded.\n" + txtResult.text;
+        for(int i = 0; i < StoreHandler.instance.products.Length; i++)
+        {
+            string price = StoreHandler.instance.products[i].price;
+            if (price.Length == 0) price = "0";
+            priceTexts[i].text = string.Format("{0:0,0}", int.Parse(price)) + " Rials";
+        }
+    }
+
+    private void OnLoadingPricesFailed(int errorCode, string message)
+    {
+        txtResult.text = "Loading Prices Failed. ErrorCode: " + errorCode + ", " + message + "\n" + txtResult.text;
+    }
+
     private void OnPurchasedSuccessfully(Purchase purchase, int productIndex)
     {
         loadingDialog.SetActive(false);
@@ -72,37 +105,50 @@ public class InAppStore : MonoBehaviour
 
         switch (errorCode)
         {
+            case StoreHandler.SERVICE_IS_NOW_READY_RETRY_OPERATION:
+
+                BuyProduct(selectedProductIndex);
+
+                return;
             case StoreHandler.ERROR_WRONG_SETTINGS:
-                // Enter public key (RSA from Bazaar panel) in StoreHandler.cs
+
                 break;
             case StoreHandler.ERROR_BAZAAR_NOT_INSTALLED:
-                // User didn't install CafeBazaar application.
+
                 break;
             case StoreHandler.ERROR_SERVICE_NOT_INITIALIZED:
-                // Billing service isn't initialized. Encorage user to retry.
+
                 break;
             case StoreHandler.ERROR_INTERNAL:
-                // Internal error happened. Follow the instructions carefully and if it persists contact Bazaar developer support.
+
                 break;
             case StoreHandler.ERROR_OPERATION_CANCELLED:
-                // Operation cancelled by user or failed.
+
                 break;
             case StoreHandler.ERROR_CONSUME_PURCHASE:
-                // Purchase was successful but couldn't consume it. So the purchase is stored in user's inventory and can be restore later without paying.
+
+                break;
+            case StoreHandler.ERROR_NOT_LOGGED_IN:
+
+                break;
+            case StoreHandler.ERROR_HAS_NOT_PRODUCT_IN_INVENTORY:
+
                 break;
             case StoreHandler.ERROR_CONNECTING_VALIDATE_API:
-                // Couldn't connect validating API due to internet connection failure or wrong client info in StoreHandler.cs.
+
                 break;
             case StoreHandler.ERROR_PURCHASE_IS_REFUNDED:
-                // Purchase is refunded
+
                 break;
             case StoreHandler.ERROR_NOT_SUPPORTED_IN_EDITOR:
-                // You can't use In App Billing in Editor mode. It only works on Android devices.
+
                 break;
-            case StoreHandler.SERVICE_IS_NOW_READY_RETRY_OPERATION:
-                // Billing service initialized, retry the operation to purchase.
-                BuyProduct(selectedProductIndex);
-                return;
+            case StoreHandler.ERROR_WRONG_PRODUCT_INDEX:
+
+                break;
+            case StoreHandler.ERROR_WRONG_PRODUCT_ID:
+
+                break;
         }
 
         errorDialog.SetActive(true);
@@ -124,45 +170,52 @@ public class InAppStore : MonoBehaviour
     {
         switch (errorCode)
         {
+            case StoreHandler.SERVICE_IS_NOW_READY_RETRY_OPERATION:
+
+                CheckInventory(selectedProductIndex);
+
+                return;
             case StoreHandler.ERROR_WRONG_SETTINGS:
-                // Enter public key (RSA from Bazaar panel) in StoreHandler.cs
+
                 break;
             case StoreHandler.ERROR_BAZAAR_NOT_INSTALLED:
-                // User didn't install CafeBazaar application.
+
                 break;
             case StoreHandler.ERROR_SERVICE_NOT_INITIALIZED:
-                // Billing service isn't initialized. Encorage user to retry.
+
                 break;
             case StoreHandler.ERROR_INTERNAL:
-                // Internal error happened. Follow the instructions carefully and if it persists contact Bazaar developer support.
+
                 break;
             case StoreHandler.ERROR_OPERATION_CANCELLED:
-                // Operation cancelled by user or failed.
+
                 break;
             case StoreHandler.ERROR_CONSUME_PURCHASE:
-                // Purchase was successful but couldn't consume it. So the purchase is stored in user's inventory and can be restore later without paying.
+
                 break;
             case StoreHandler.ERROR_NOT_LOGGED_IN:
-                // User is not logged in to Cafebazaar application so can't check the inventory.
+
                 break;
             case StoreHandler.ERROR_HAS_NOT_PRODUCT_IN_INVENTORY:
-                // User has not this product in the inventory or the product is consumed.
+
                 break;
             case StoreHandler.ERROR_CONNECTING_VALIDATE_API:
-                // Couldn't connect validating API due to internet connection failure or wrong client info in StoreHandler.cs.
+
                 break;
             case StoreHandler.ERROR_PURCHASE_IS_REFUNDED:
-                // Purchase is refunded
+
                 break;
             case StoreHandler.ERROR_NOT_SUPPORTED_IN_EDITOR:
-                // You can't use In App Billing in Editor mode. It only works on Android devices.
-                break;
-            case StoreHandler.SERVICE_IS_NOW_READY_RETRY_OPERATION:
-                // Billing service initialized, retry the operation to purchase.
-                CheckInventory(selectedProductIndex);
-                return;
-        }
 
+                break;
+            case StoreHandler.ERROR_WRONG_PRODUCT_INDEX:
+
+                break;
+            case StoreHandler.ERROR_WRONG_PRODUCT_ID:
+
+                break;
+        }
+        
         txtResult.text = "ErrorCode: " + errorCode + ", " + message + "\n" + txtResult.text;
         loadingDialog.SetActive(false);
     }

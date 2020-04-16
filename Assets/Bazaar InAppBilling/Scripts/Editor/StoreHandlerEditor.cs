@@ -1,11 +1,12 @@
-﻿using UnityEditor;
+﻿using BazaarInAppBilling;
+using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof(StoreHandler), true)]
 public class StoreHandlerEditor : Editor {
 
-    private readonly string version = "1.0";
-    private SerializedProperty products, publicKey, payload, validatePurchases, clientId, clientSecret, refreshToken;
+    private readonly string version = "1.1";
+    private SerializedProperty products, publicKey, payload, editorDummyResponse, validatePurchases, clientId, clientSecret, refreshToken;
     
     private StoreHandler storeHandler;
 
@@ -16,12 +17,13 @@ public class StoreHandlerEditor : Editor {
         products = serializedObject.FindProperty("products");
         publicKey = serializedObject.FindProperty("publicKey");
         payload = serializedObject.FindProperty("payload");
+        editorDummyResponse = serializedObject.FindProperty("editorDummyResponse");
         validatePurchases = serializedObject.FindProperty("validatePurchases");
         clientId = serializedObject.FindProperty("clientId");
         clientSecret = serializedObject.FindProperty("clientSecret");
         refreshToken = serializedObject.FindProperty("refreshToken");
     }
-
+    
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
@@ -38,9 +40,12 @@ public class StoreHandlerEditor : Editor {
         EditorGUILayout.Space();
 
         EditorGUILayout.PropertyField(products, new GUIContent("products", "First define your products in CafeBazaar panel."), true);
-
+        
         EditorGUILayout.PropertyField(publicKey, new GUIContent("Public Key", "RSA Key from CafeBazaar."));
+
         EditorGUILayout.PropertyField(payload, new GUIContent("Payload", "Arbitrary value to identify purchases."));
+
+        EditorGUILayout.PropertyField(editorDummyResponse, new GUIContent("Editor Dummy Response", "If checked all the operations will call success events."));
 
         EditorGUILayout.PropertyField(validatePurchases, new GUIContent("Validate Purchases", "Validate purchases using CafeBazaar developer API."));
        
@@ -77,4 +82,5 @@ public class StoreHandlerEditor : Editor {
         GUILayout.Label("Author: Hojjat.Reyhane", style);
         GUILayout.EndVertical();
     }
+    
 }
